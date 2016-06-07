@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 
 project(dart_lcm)
 
+# enable C++ 11
+add_definitions(-std=c++11)
+
 include(ExternalProject)
 
 ExternalProject_Add(lcm_types
@@ -38,8 +41,8 @@ set(HDR_LIST
     include/dart_lcm_joints.hpp
     )
 
-include_directories(include)
-add_library(dart_lcm SHARED ${SRC_LIST})
+include_directories(include/)
+add_library(dart_lcm SHARED ${SRC_LIST} ${HDR_LIST})
 target_link_libraries(dart_lcm ${lcm_LIBRARIES})
 target_link_libraries(dart_lcm ${dart_LIBRARIES})
 

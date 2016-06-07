@@ -16,13 +16,24 @@ public:
 
     bool setJointNames(const std::vector<std::string> &joint_names);
 
-    bool setJointNames(const HostOnlyModel *model);
+    bool setJointNames(const HostOnlyModel &model);
 
     void initLCM(const std::string topic_name);
 
-    void next();
+    /**
+     * @brief next wait for next messages
+     * @param time_ms optional timeout in milliseconds
+     * @return 0 on success
+     * @return -1 on failure
+     * @return -2 on timeout
+     */
+    int next(const int time_ms = 0);
 
     void handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg);
+
+    const std::vector<float> &getJointValues() const {
+        return _joint_values;
+    }
 
 
 private:
