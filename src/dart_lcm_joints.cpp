@@ -43,11 +43,6 @@ int LCM_JointsProvider::next(const int time_ms) {
         ret = (time_ms>0) ? _lcm->handleTimeout(time_ms) : _lcm->handle();
     }
 
-    // check received joint values
-    if(_joint_names.size() != _joint_values.size()) {
-        std::cerr<<"received different amount of joint values ("<<_joint_values.size()<<") than defined by model ("<<_joint_names.size()<<")"<<std::endl;
-    }
-
     // common return codes for blocking and timeour handles
     if(ret>=0 && time_ms>0) {
         ret = (ret == 0) ? -2 : 0;
@@ -58,10 +53,7 @@ int LCM_JointsProvider::next(const int time_ms) {
 
 void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg) {
     // set default values to NaN, so we can check if joints are present
-    _joint_values.clear();
     _joint_values = std::vector<float>(_joint_names.size(), std::numeric_limits<float>::quiet_NaN());
-
-    std::cout<<"received robot state"<<std::endl;
 
     // hashtable for faster search of joitn names and values
     std::map<std::string, float> joints;
