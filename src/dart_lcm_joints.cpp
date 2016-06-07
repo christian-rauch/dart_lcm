@@ -1,4 +1,6 @@
 #include "dart_lcm_joints.hpp"
+#include <limits>
+#include <algorithm>
 
 namespace dart {
 
@@ -55,8 +57,23 @@ int LCM_JointsProvider::next(const int time_ms) {
 }
 
 void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg) {
-    //
+    // set default values to NaN, so we can check if joints are present
     _joint_values.clear();
+    _joint_values = std::vector<float>(_joint_names.size(), std::numeric_limits<float>::quiet_NaN());
+
+    std::cout<<"received robot state"<<std::endl;
+
+    // hashtable for faster search of joitn names and values
+    std::map<std::string, float> joints;
+
+    std::transform(msg->joint_name.begin(), msg->joint_name.end(), msg->joint_position.begin(),
+                   std::inserter(joints, joints.end()),
+                   std::make_pair<std::string const&, float const&>);
+
+    // joint values need to be ordered as they appear in '_joint_names'
+    for(unsigned int i=0; i<_joint_names.size(); i++) {
+        _joint_values[i] = joints[_joint_names[i]];
+    }
 }
 
 }
