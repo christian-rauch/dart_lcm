@@ -35,11 +35,14 @@ public:
         return _joint_values;
     }
 
+    const dart::SE3 &getTransformWorldToRobot(){ return _T_wr; }
+
 
 private:
     lcm::LCM *_lcm;
     std::vector<std::string> _joint_names;
     std::vector<float> _joint_values;
+    dart::SE3 _T_wr;    // transformation world to robot
 };
 
 } // namespace dart

@@ -70,6 +70,18 @@ void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const
     for(unsigned int i=0; i<_joint_names.size(); i++) {
         _joint_values[i] = (joints.count(_joint_names[i])!=0) ? joints[_joint_names[i]] : NAN;
     }
+
+    // get robot pose, transformation from world frame  to robot root frame
+    const bot_core::vector_3d_t t = msg->pose.translation;
+    const bot_core::quaternion_t q = msg->pose.rotation;
+    // quaternion to euler angles
+    // https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Euler_Angles_from_Quaternion
+    float phi, theta, psi;
+    phi = atan2(2*(q.w*q.x + q.y*q.z), 1-2*(pow(q.x,2) + pow(q.y,2)));
+    theta = asin(2*(q.w*q.y - q.z*q.x));
+    psi = atan2(2*(q.w*q.z + q.x*q.y), 1-2*(pow(q.y,2) + pow(q.z,2)));
+
+    _T_wr = dart::SE3Fromse3(dart::se3(t.x, t.y, t.z, phi, theta, psi));
 }
 
 } // namespace dart
