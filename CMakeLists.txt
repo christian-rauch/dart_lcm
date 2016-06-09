@@ -32,6 +32,7 @@ include_directories(${dart_dart_INCLUDEDIR}/dart)
 # CUDA
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${CUDA_TOOLKIT_ROOT_DIR}/samples/common/inc)
+add_definitions(-DCUDA_BUILD)
 
 set(SRC_LIST
     src/dart_lcm_joints.cpp
@@ -39,6 +40,7 @@ set(SRC_LIST
 
 set(HDR_LIST
     include/dart_lcm_joints.hpp
+    include/dart_lcm_depth_provider.hpp
     )
 
 include_directories(include/)
