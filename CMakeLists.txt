@@ -5,6 +5,8 @@ project(dart_lcm)
 # enable C++ 11
 add_definitions(-std=c++11)
 
+add_definitions ("-Wall")
+
 include(ExternalProject)
 
 ExternalProject_Add(lcm_types

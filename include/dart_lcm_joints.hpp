@@ -14,9 +14,9 @@ public:
     LCM_JointsProvider();
     ~LCM_JointsProvider();
 
-    bool setJointNames(const std::vector<std::string> &joint_names);
+    void setJointNames(const std::vector<std::string> &joint_names);
 
-    bool setJointNames(const HostOnlyModel &model);
+    void setJointNames(const HostOnlyModel &model);
 
     void initLCM(const std::string topic_name);
 

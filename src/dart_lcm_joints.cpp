@@ -13,12 +13,11 @@ LCM_JointsProvider::~LCM_JointsProvider() {
         delete _lcm;
 }
 
-bool LCM_JointsProvider::setJointNames(const std::vector<std::string> &joint_names) {
+void LCM_JointsProvider::setJointNames(const std::vector<std::string> &joint_names) {
     _joint_names = joint_names;
-    return true;
 }
 
-bool LCM_JointsProvider::setJointNames(const HostOnlyModel &model) {
+void LCM_JointsProvider::setJointNames(const HostOnlyModel &model) {
     _joint_names.resize(model.getNumJoints());
     for(unsigned int j=0; j<_joint_names.size(); j++) {
         _joint_names[j] = model.getJointName(j);

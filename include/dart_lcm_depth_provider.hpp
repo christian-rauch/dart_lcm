@@ -234,6 +234,7 @@ bool LCM_DepthSource<DepthType,ColorType>::initLCM(const std::string &img_channe
     _timeout_ms = timeout_ms;
 
     lcm->subscribe(img_channel, &LCM_DepthSource<DepthType, ColorType>::imgHandle, this);
+    return true;
 }
 
 template <typename DepthType, typename ColorType>
