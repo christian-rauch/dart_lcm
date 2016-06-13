@@ -54,6 +54,7 @@ int LCM_JointsProvider::next(const int time_ms) {
 void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg) {
     // allocate memory for amount of expected joints
     _joint_values.resize(_joint_names.size());
+    _joints_name_value.clear();
 
     // hashtable for faster search of joint names and values
     std::transform(msg->joint_name.begin(), msg->joint_name.end(),  // key range
