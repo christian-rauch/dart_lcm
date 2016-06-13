@@ -56,10 +56,9 @@ void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const
     _joint_values.resize(_joint_names.size());
 
     // hashtable for faster search of joint names and values
-    std::map<std::string, float> joints;
     std::transform(msg->joint_name.begin(), msg->joint_name.end(),  // key range
                    msg->joint_position.begin(),                     // value range
-                   std::inserter(joints, joints.end()),             // target map
+                   std::inserter(_joints_name_value, _joints_name_value.end()), // target map
                    std::make_pair<std::string const&, float const&>); // key-value pair
 
     // order '_joint_values' as they appear in '_joint_names'
@@ -68,7 +67,12 @@ void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const
     // be generated. Use NaN value if key is not present to determine omitted
     // joints later using std::isnan().
     for(unsigned int i=0; i<_joint_names.size(); i++) {
-        _joint_values[i] = (joints.count(_joint_names[i])!=0) ? joints[_joint_names[i]] : NAN;
+        const std::string cur_joint = _joint_names[i];
+        // if joint is not available, set value in the joint map to NAN
+        if(_joints_name_value.count(cur_joint)==0) {
+            _joints_name_value[cur_joint] = NAN;
+        }
+        _joint_values[i] = _joints_name_value.at(cur_joint);
     }
 
     // get robot pose, transformation from world frame  to robot root frame

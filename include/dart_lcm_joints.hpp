@@ -37,11 +37,14 @@ public:
 
     const dart::SE3 &getTransformWorldToRobot(){ return _T_wr; }
 
+    const std::map<std::string, float> &getJointsNameValue() { return _joints_name_value; }
+
 
 private:
     lcm::LCM *_lcm;
     std::vector<std::string> _joint_names;
     std::vector<float> _joint_values;
+    std::map<std::string, float> _joints_name_value;
     dart::SE3 _T_wr;    // transformation world to robot
 };
 
