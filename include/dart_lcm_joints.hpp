@@ -41,7 +41,7 @@ public:
 
 
 private:
-    lcm::LCM *_lcm;
+    lcm::LCM _lcm;
     std::vector<std::string> _joint_names;
     std::vector<float> _joint_values;
     std::map<std::string, float> _joints_name_value;

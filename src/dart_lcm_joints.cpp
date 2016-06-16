@@ -4,14 +4,9 @@
 
 namespace dart {
 
-LCM_JointsProvider::LCM_JointsProvider() {
-    _lcm = new lcm::LCM();
-}
+LCM_JointsProvider::LCM_JointsProvider() { }
 
-LCM_JointsProvider::~LCM_JointsProvider() {
-    if(_lcm->good())
-        delete _lcm;
-}
+LCM_JointsProvider::~LCM_JointsProvider() { }
 
 void LCM_JointsProvider::setJointNames(const std::vector<std::string> &joint_names) {
     _joint_names = joint_names;
@@ -25,8 +20,8 @@ void LCM_JointsProvider::setJointNames(const HostOnlyModel &model) {
 }
 
 void LCM_JointsProvider::initLCM(const std::string topic_name) {
-    if(_lcm->good()) {
-        _lcm->subscribe(topic_name, &LCM_JointsProvider::handle_msg_joints, this);
+    if(_lcm.good()) {
+        _lcm.subscribe(topic_name, &LCM_JointsProvider::handle_msg_joints, this);
     }
 }
 
@@ -38,8 +33,8 @@ int LCM_JointsProvider::next(const int time_ms) {
     }
 
     // wait for next message (for defined time)
-    if(_lcm->good() && !_joint_names.empty()) {
-        ret = (time_ms>0) ? _lcm->handleTimeout(time_ms) : _lcm->handle();
+    if(_lcm.good() && !_joint_names.empty()) {
+        ret = (time_ms>0) ? _lcm.handleTimeout(time_ms) : _lcm.handle();
     }
 
     // common return codes for blocking and timeour handles
