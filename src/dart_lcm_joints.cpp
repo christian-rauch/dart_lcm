@@ -4,7 +4,10 @@
 
 namespace dart {
 
-LCM_JointsProvider::LCM_JointsProvider() { }
+LCM_JointsProvider::LCM_JointsProvider() {
+    // thread not running at initilization
+    _thread_running = false;
+}
 
 LCM_JointsProvider::~LCM_JointsProvider() { }
 
@@ -19,9 +22,27 @@ void LCM_JointsProvider::setJointNames(const HostOnlyModel &model) {
     }
 }
 
-void LCM_JointsProvider::initLCM(const std::string topic_name) {
-    if(_lcm.good()) {
-        _lcm.subscribe(topic_name, &LCM_JointsProvider::handle_msg_joints, this);
+void LCM_JointsProvider::initLCM(const std::string topic_name, const bool threading) {
+    if(!_lcm.good())
+        return;
+
+    _lcm.subscribe(topic_name, &LCM_JointsProvider::handle_msg_joints, this);
+
+    if(threading) {
+        if(!_thread_running) {
+            // create new thread using lambda function for looping
+            _thread_running = true;
+            _handle_thread = std::thread([this]{
+                while(_lcm.good()) _lcm.handle();
+                _thread_running = false;
+            });
+            _handle_thread.detach();
+        }
+        else {
+            std::cerr<<"You try to initialize a thread more than once. Ignoring this request until original thread is finished."<<std::endl;
+        }
+    }
+}
     }
 }
 
