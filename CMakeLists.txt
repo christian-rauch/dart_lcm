@@ -18,6 +18,7 @@ ExternalProject_Add(lcm_types
 ExternalProject_Get_Property(lcm_types binary_dir)
 
 find_package(CUDA REQUIRED)
+find_package(Boost REQUIRED thread system)
 find_package(PkgConfig)
 pkg_check_modules(LCM REQUIRED lcm)
 pkg_check_modules(dart REQUIRED dart cuda-7.5)
@@ -25,16 +26,20 @@ pkg_check_modules(dart REQUIRED dart cuda-7.5)
 # LCM
 include_directories(${lcm_INCLUDE_DIRS})
 include_directories(${binary_dir}/lcmgen)
-link_directories(${dart_LIBRARY_DIRS})
 
 # DART
 include_directories(${dart_INCLUDE_DIRS})
 include_directories(${dart_dart_INCLUDEDIR}/dart)
+link_directories(${dart_LIBRARY_DIRS})
 
 # CUDA
 include_directories(${CUDA_INCLUDE_DIRS})
 include_directories(${CUDA_TOOLKIT_ROOT_DIR}/samples/common/inc)
 add_definitions(-DCUDA_BUILD)
+
+# Boost
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 
 set(SRC_LIST
     src/dart_lcm_joints.cpp
@@ -49,6 +54,7 @@ include_directories(include/)
 add_library(dart_lcm SHARED ${SRC_LIST} ${HDR_LIST})
 target_link_libraries(dart_lcm ${lcm_LIBRARIES})
 target_link_libraries(dart_lcm ${dart_LIBRARIES})
+target_link_libraries(dart_lcm ${Boost_SYSTEM_LIBRARIES} ${Boost_THREAD_LIBRARIES})
 
 
 ## install

@@ -12,6 +12,7 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <boost/thread.hpp>
 
 namespace  dart {
 
@@ -51,14 +52,20 @@ public:
 
     void handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg);
 
-    const std::vector<float> &getJointValues() const {
+    std::vector<float> getJointValues() {
+        std::lock_guard<boost::shared_mutex> lck(_mutex);
         return _joint_values;
     }
 
-    const dart::SE3 &getTransformWorldToRobot(){ return _T_wr; }
+    dart::SE3 getTransformWorldToRobot(){
+        std::lock_guard<boost::shared_mutex> lck(_mutex);
+        return _T_wr;
+    }
 
-    const std::map<std::string, float> &getJointsNameValue() { return _joints_name_value; }
-
+    std::map<std::string, float> getJointsNameValue() {
+        std::lock_guard<boost::shared_mutex> lck(_mutex);
+        return _joints_name_value;
+    }
 
 private:
     lcm::LCM _lcm;
@@ -73,9 +80,19 @@ private:
     std::thread _handle_thread;
 
     /**
-     * @brief _thread_running atomic flag to check if a threasd is already running
+     * @brief _thread_running atomic flag to check if a thread is already running
      */
     std::atomic<bool> _thread_running;
+
+    /**
+     * @brief _mutex shared mutex to lock access to joint values.
+     *
+     * Use this whenever accessing variables in parallel. Use "std::lock_guard<boost::shared_mutex> lck(_mutex)"
+     * for getter methods before a critical variables is returned to ensure the _mutex is locked and
+     * will automatically be unlocked when "lck" is destroyed (e.g. gets out of scope after function return).
+     */
+    boost::shared_mutex _mutex;
+
 };
 
 } // namespace dart

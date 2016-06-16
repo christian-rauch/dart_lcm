@@ -12,14 +12,18 @@ LCM_JointsProvider::LCM_JointsProvider() {
 LCM_JointsProvider::~LCM_JointsProvider() { }
 
 void LCM_JointsProvider::setJointNames(const std::vector<std::string> &joint_names) {
+    _mutex.lock();
     _joint_names = joint_names;
+    _mutex.unlock();
 }
 
 void LCM_JointsProvider::setJointNames(const HostOnlyModel &model) {
+    _mutex.lock();
     _joint_names.resize(model.getNumJoints());
     for(unsigned int j=0; j<_joint_names.size(); j++) {
         _joint_names[j] = model.getJointName(j);
     }
+    _mutex.unlock();
 }
 
 void LCM_JointsProvider::initLCM(const std::string topic_name, const bool threading) {
@@ -43,14 +47,12 @@ void LCM_JointsProvider::initLCM(const std::string topic_name, const bool thread
         }
     }
 }
-    }
-}
 
 int LCM_JointsProvider::next(const int time_ms) {
     int ret = -1;
     // check if joint names are known
     if(_joint_names.empty()) {
-        std::cerr<<"no joints specified, you should add joint names directly or by model"<<std::endl;
+        std::cerr<<"no joints specified, you should add joint names directly or by model using the .setJointNames() method"<<std::endl;
     }
 
     // wait for next message (for defined time)
@@ -67,6 +69,9 @@ int LCM_JointsProvider::next(const int time_ms) {
 }
 
 void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg) {
+
+    _mutex.lock();
+
     // allocate memory for amount of expected joints
     _joint_values.resize(_joint_names.size());
     _joints_name_value.clear();
@@ -102,6 +107,8 @@ void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const
     psi = atan2(2*(q.w*q.z + q.x*q.y), 1-2*(pow(q.y,2) + pow(q.z,2)));
 
     _T_wr = dart::SE3Fromse3(dart::se3(t.x, t.y, t.z, phi, theta, psi));
+
+    _mutex.unlock();
 }
 
 } // namespace dart
