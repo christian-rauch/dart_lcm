@@ -11,7 +11,9 @@
 
 // threading
 #include <thread>
+#include <mutex>
 #include <atomic>
+#include <boost/thread.hpp>
 
 // stream input/output
 #include <iostream>
@@ -87,6 +89,11 @@ private:
      */
     std::atomic<bool> _thread_running;
 
+    /**
+     * @brief _mutex synchronize access to data
+     */
+    mutable boost::shared_mutex _mutex;
+
 public:
     /**
      * @brief LCM_DepthSource
@@ -119,18 +126,29 @@ public:
      * @brief getDepth
      * @return pointer to array containing depth values
      */
-    const DepthType * getDepth() const { return _depthData->hostPtr(); }
+    const DepthType * getDepth() const {
+        std::lock_guard<boost::shared_mutex> lck(_mutex);
+        return _depthData->hostPtr();
+    }
+
     /**
      * @brief getDeviceDepth
      * @return pointer to array containing depth values
      */
-    const DepthType * getDeviceDepth() const { return _depthData->devicePtr(); }
+    const DepthType * getDeviceDepth() const {
+        std::lock_guard<boost::shared_mutex> lck(_mutex);
+        return _depthData->devicePtr();
+    }
 #else
     /**
      * @brief getDepth
      * @return pointer to array containing depth values
      */
-    const DepthType * getDepth() const { return _depthData; }
+    const DepthType * getDepth() const {
+        std::lock_guard<boost::shared_mutex> lck(_mutex);
+        return _depthData;
+    }
+
     /**
      * @brief getDeviceDepth
      * @return pointer to array containing depth values
@@ -148,7 +166,10 @@ public:
      * @brief getDepthTime
      * @return current timestamp of sensor reading as epoch
      */
-    uint64_t getDepthTime() const { return _depthTime; }
+    uint64_t getDepthTime() const {
+        std::lock_guard<boost::shared_mutex> lck(_mutex);
+        return _depthTime;
+    }
 
     /**
      * @brief initLCM initializing LCM subscriber to images_t topic
@@ -164,7 +185,8 @@ public:
 
     // handle lcm images_t message and save their content
     /**
-     * @brief imgHandle callback function that is called each time a new message arrives
+     * @brief imgHandle callback function that is called each time a new message arrives.
+     * Extract depth image from LCM message, uncompress if necessary and store their content.
      * @param rbuf
      * @param channel
      * @param msg
@@ -277,7 +299,9 @@ template <typename DepthType, typename ColorType>
 void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
                const bot_core::images_t* msg) {
 
+    _mutex.lock();
     this->_frame++;
+    _mutex.unlock();
 
     // read data
     const int64_t n_img = msg->n_images;
@@ -347,6 +371,8 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
         std::cerr<<"no disparity image found"<<std::endl;
     }
 
+    _mutex.lock();
+
     // cast time from signed to unsigned
     _depthTime = (msg->utime >= 0) ? (uint64_t)msg->utime : 0;
 
@@ -360,6 +386,7 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
     // TODO: who is freeing 'raw_data'?
 #endif // CUDA_BUILD
 
+    _mutex.unlock();
 }
 
 // replace disparity by depth, values are changes inplace (in memory)
