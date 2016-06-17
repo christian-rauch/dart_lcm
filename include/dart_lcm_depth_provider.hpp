@@ -183,7 +183,6 @@ public:
      */
     bool initLCM(const std::string &img_channel, const bool threading = false, const int timeout_ms = 0);
 
-    // handle lcm images_t message and save their content
     /**
      * @brief imgHandle callback function that is called each time a new message arrives.
      * Extract depth image from LCM message, uncompress if necessary and store their content.
@@ -194,7 +193,6 @@ public:
     void imgHandle(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
                    const bot_core::images_t* msg);
 
-    // convert a disparity image to a distance image using camera parameters
     /**
      * @brief disparity_to_depth helper function to convert LCM's disparity to depth values using the stereo camera parameters. Disparity values are transfered to depth values in memory, e.g. no new array will be created and the provided disparit values will directly be changes to depth values in memory.
      * @param disparity_img array containing disparity values, will contain depth values after function call
@@ -258,7 +256,7 @@ void LCM_DepthSource<DepthType,ColorType>::advance() {
         // wait (block) for new messages
         (_timeout_ms>0) ? lcm.handleTimeout(_timeout_ms) : lcm.handle();
     }
-    // ignore call if messages are handles in thread
+    // ignore call if messages are handled in thread
 
     // TODO: enable reading from log file directly
 }
