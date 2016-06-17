@@ -30,6 +30,12 @@ void LCM_JointsProvider::initLCM(const std::string topic_name, const bool thread
     if(!_lcm.good())
         return;
 
+    // check if joint names are known
+    if(_joint_names.empty()) {
+        std::cerr<<"no joints specified, you should add joint names directly or by model using the .setJointNames() method"<<std::endl;
+        return;
+    }
+
     _lcm.subscribe(topic_name, &LCM_JointsProvider::handle_msg_joints, this);
 
     if(threading) {
@@ -50,19 +56,20 @@ void LCM_JointsProvider::initLCM(const std::string topic_name, const bool thread
 
 int LCM_JointsProvider::next(const int time_ms) {
     int ret = -1;
-    // check if joint names are known
-    if(_joint_names.empty()) {
-        std::cerr<<"no joints specified, you should add joint names directly or by model using the .setJointNames() method"<<std::endl;
-    }
 
-    // wait for next message (for defined time)
-    if(_lcm.good() && !_joint_names.empty()) {
-        ret = (time_ms>0) ? _lcm.handleTimeout(time_ms) : _lcm.handle();
-    }
+    if(!_thread_running) {
+        // wait for next message (for defined time)
+        if(_lcm.good() && !_joint_names.empty()) {
+            ret = (time_ms>0) ? _lcm.handleTimeout(time_ms) : _lcm.handle();
+        }
 
-    // common return codes for blocking and timeour handles
-    if(ret>=0 && time_ms>0) {
-        ret = (ret == 0) ? -2 : 0;
+        // common return codes for blocking and timeour handles
+        if(ret>=0 && time_ms>0) {
+            ret = (ret == 0) ? -2 : 0;
+        }
+    }
+    else {
+        std::cout<<"LCM joint messages are handled in thread. There is no need to call .next()"<<std::endl;
     }
 
     return ret;
