@@ -4,6 +4,7 @@
 // LCM
 #include <lcm/lcm-cpp.hpp>
 #include <lcmtypes/bot_core/robot_state_t.hpp>
+#include "lcm_singelton.hpp"
 
 // DART
 #include <dart/model/host_only_model.h>

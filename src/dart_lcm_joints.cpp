@@ -5,6 +5,9 @@
 namespace dart {
 
 LCM_JointsProvider::LCM_JointsProvider() {
+
+    _lcm = LCMSingelton::getLCM();
+
     // thread not running at initilization
     _thread_running = false;
 }

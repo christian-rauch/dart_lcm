@@ -8,6 +8,7 @@
 // LCM and message header
 #include <lcm/lcm-cpp.hpp>
 #include <lcmtypes/bot_core/images_t.hpp>
+#include "lcm_singelton.hpp"
 
 // threading
 #include <thread>
@@ -206,6 +207,8 @@ public:
 
 template <typename DepthType, typename ColorType>
 LCM_DepthSource<DepthType,ColorType>::LCM_DepthSource(const StereoCameraParameter &param, const float scale) {
+
+    lcm = LCMSingelton::getLCM();
 
     // thread not running at initilization
     _thread_running = false;
