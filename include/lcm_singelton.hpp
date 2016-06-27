@@ -33,6 +33,19 @@ public:
     static void initLCM(Args&& ...args) {
         delete _lcm;
         _lcm = new lcm::LCM(std::forward<Args>(args)...);
+
+        _thread = std::thread([]{
+            //while(LCMSingelton::_lcm->good()) LCMSingelton::_lcm->handle();
+            while(true) {
+                if(LCMSingelton::_lcm->good()) {
+                    std::cout<<"waiting for message"<<std::endl;
+                    LCMSingelton::_lcm->handle();
+                    std::cout<<"got message"<<std::endl;
+                }
+                else
+                    std::cout<<"lcm not good in thread"<<std::endl;
+            }
+        });
     }
 
 private:
@@ -52,16 +65,18 @@ private:
  */
 lcm::LCM *LCMSingelton::_lcm = new lcm::LCM();
 
-std::thread LCMSingelton::_thread = std::thread([]{
-    //while(LCMSingelton::_lcm->good()) LCMSingelton::_lcm->handle();
-    while(true) {
-        if(LCMSingelton::_lcm->good()) {
-            std::cout<<"waiting for message"<<std::endl;
-            LCMSingelton::_lcm->handle();
-        }
-        else
-            std::cout<<"lcm not good in thread"<<std::endl;
-    }
-});
+std::thread LCMSingelton::_thread;
+
+//std::thread LCMSingelton::_thread = std::thread([]{
+//    //while(LCMSingelton::_lcm->good()) LCMSingelton::_lcm->handle();
+//    while(true) {
+//        if(LCMSingelton::_lcm->good()) {
+//            std::cout<<"waiting for message"<<std::endl;
+//            LCMSingelton::_lcm->handle();
+//        }
+//        else
+//            std::cout<<"lcm not good in thread"<<std::endl;
+//    }
+//});
 
 #endif // LCM_SINGELTON_HPP
