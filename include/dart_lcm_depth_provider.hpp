@@ -8,6 +8,7 @@
 // LCM and message header
 #include <lcm/lcm-cpp.hpp>
 #include <lcmtypes/bot_core/images_t.hpp>
+#include "lcm_provider_base.hpp"
 
 // threading
 #include <thread>
@@ -40,12 +41,8 @@ struct StereoCameraParameter {
 /// LCM_DepthSource class definition
 ///
 template <typename DepthType, typename ColorType>
-class LCM_DepthSource : public dart::DepthSource<DepthType,ColorType> {
+class LCM_DepthSource : public LCM_CommonBase, public dart::DepthSource<DepthType,ColorType> {
 private:
-    /**
-     * @brief lcm pointer to LCM
-     */
-    lcm::LCM lcm;
 
 #ifdef CUDA_BUILD
     /**
@@ -73,21 +70,6 @@ private:
      * @brief _ScaleToMeters optional scale that is multiplied with internally stored values to obtain measurement in meter. It is applied just before the backprojection.
      */
     float _ScaleToMeters;
-
-    /**
-     * @brief _timeout_ms optional timeout in milliseconds when waiting for messages
-     */
-    int _timeout_ms;
-
-    /**
-     * @brief _handle_thread thread object that handles LCM messages, e.g. waits for incomming messages
-     */
-    std::thread _handle_thread;
-
-    /**
-     * @brief _thread_running atomic flag to check if a threasd is already running
-     */
-    std::atomic<bool> _thread_running;
 
     /**
      * @brief _mutex synchronize access to data
@@ -172,16 +154,15 @@ public:
     }
 
     /**
-     * @brief initLCM initializing LCM subscriber to images_t topic
+     * @brief subscribe initializing LCM subscriber to images_t topic
      *
      * This method sets up the subscription for the requested channel. By default, the handling of messages (and thus advance()) will block. Set threading to true to wait for incomming messages in a dedicated thread. Alternatively to wait for incomming messages in a single thread, a timeout value van be set. This value is not used if threading is true.
      *
      * @param channel topic name of stereo camera, e.g. "CAMERA"
-     * @param threading wait for incomming messages in dedicated thread
-     * @param timeout_ms optional timeout in milliseconds when waiting for messages
-     * @return true on success, false otherwise
+     * @return true on success
+     * @return false on failure
      */
-    bool initLCM(const std::string &img_channel, const bool threading = false, const int timeout_ms = 0);
+    bool subscribe(const std::string &img_channel);
 
     /**
      * @brief imgHandle callback function that is called each time a new message arrives.
@@ -206,9 +187,6 @@ public:
 
 template <typename DepthType, typename ColorType>
 LCM_DepthSource<DepthType,ColorType>::LCM_DepthSource(const StereoCameraParameter &param, const float scale) {
-
-    // thread not running at initilization
-    _thread_running = false;
 
     // depth source properties
     this->_isLive = true; // no way to control LCM playback from here
@@ -251,15 +229,7 @@ void LCM_DepthSource<DepthType,ColorType>::setFrame(const uint frame) {
 }
 
 template <typename DepthType, typename ColorType>
-void LCM_DepthSource<DepthType,ColorType>::advance() {
-    if(!_thread_running) {
-        // wait (block) for new messages
-        (_timeout_ms>0) ? lcm.handleTimeout(_timeout_ms) : lcm.handle();
-    }
-    // ignore call if messages are handled in thread
-
-    // TODO: enable reading from log file directly
-}
+void LCM_DepthSource<DepthType,ColorType>::advance() { }
 
 template <typename DepthType, typename ColorType>
 bool LCM_DepthSource<DepthType,ColorType>::hasRadialDistortionParams() const {
@@ -267,29 +237,13 @@ bool LCM_DepthSource<DepthType,ColorType>::hasRadialDistortionParams() const {
 }
 
 template <typename DepthType, typename ColorType>
-bool LCM_DepthSource<DepthType,ColorType>::initLCM(const std::string &img_channel, const bool threading, const int timeout_ms) {
-    if(!lcm.good()) {
+bool LCM_DepthSource<DepthType,ColorType>::subscribe(const std::string &img_channel) {
+    if(!getLCM().good()) {
         return false;
     }
 
-    lcm.subscribe(img_channel, &LCM_DepthSource<DepthType, ColorType>::imgHandle, this);
+    getLCM().subscribe(img_channel, &LCM_DepthSource<DepthType, ColorType>::imgHandle, this);
 
-    _timeout_ms = timeout_ms;
-
-    if(threading) {
-        if(!_thread_running) {
-            // create new thread using lambda function for looping
-            _thread_running = true;
-            _handle_thread = std::thread([this]{
-                while(lcm.good()) lcm.handle();
-                _thread_running = false;
-            });
-            _handle_thread.detach();
-        }
-        else {
-            std::cerr<<"You try to initialize a thread more than once. Ignoring this request until original thread is finished."<<std::endl;
-        }
-    }
     return true;
 }
 

@@ -4,10 +4,7 @@
 
 namespace dart {
 
-LCM_JointsProvider::LCM_JointsProvider() {
-    // thread not running at initilization
-    _thread_running = false;
-}
+LCM_JointsProvider::LCM_JointsProvider() { }
 
 LCM_JointsProvider::~LCM_JointsProvider() { }
 
@@ -26,8 +23,8 @@ void LCM_JointsProvider::setJointNames(const HostOnlyModel &model) {
     _mutex.unlock();
 }
 
-void LCM_JointsProvider::initLCM(const std::string topic_name, const bool threading) {
-    if(!_lcm.good())
+void LCM_JointsProvider::subscribe(const std::string &topic_name) {
+    if(!getLCM().good())
         return;
 
     // check if joint names are known
@@ -36,43 +33,7 @@ void LCM_JointsProvider::initLCM(const std::string topic_name, const bool thread
         return;
     }
 
-    _lcm.subscribe(topic_name, &LCM_JointsProvider::handle_msg_joints, this);
-
-    if(threading) {
-        if(!_thread_running) {
-            // create new thread using lambda function for looping
-            _thread_running = true;
-            _handle_thread = std::thread([this]{
-                while(_lcm.good()) _lcm.handle();
-                _thread_running = false;
-            });
-            _handle_thread.detach();
-        }
-        else {
-            std::cerr<<"You try to initialize a thread more than once. Ignoring this request until original thread is finished."<<std::endl;
-        }
-    }
-}
-
-int LCM_JointsProvider::next(const int time_ms) {
-    int ret = -1;
-
-    if(!_thread_running) {
-        // wait for next message (for defined time)
-        if(_lcm.good() && !_joint_names.empty()) {
-            ret = (time_ms>0) ? _lcm.handleTimeout(time_ms) : _lcm.handle();
-        }
-
-        // common return codes for blocking and timeour handles
-        if(ret>=0 && time_ms>0) {
-            ret = (ret == 0) ? -2 : 0;
-        }
-    }
-    else {
-        std::cout<<"LCM joint messages are handled in thread. There is no need to call .next()"<<std::endl;
-    }
-
-    return ret;
+    getLCM().subscribe(topic_name, &LCM_JointsProvider::handle_msg_joints, this);
 }
 
 void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg) {

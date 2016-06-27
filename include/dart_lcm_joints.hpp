@@ -4,6 +4,7 @@
 // LCM
 #include <lcm/lcm-cpp.hpp>
 #include <lcmtypes/bot_core/robot_state_t.hpp>
+#include "lcm_provider_base.hpp"
 
 // DART
 #include <dart/model/host_only_model.h>
@@ -16,7 +17,7 @@
 
 namespace  dart {
 
-class LCM_JointsProvider
+class LCM_JointsProvider: public LCM_CommonBase
 {
 
 public:
@@ -39,16 +40,7 @@ public:
      */
     void setJointNames(const HostOnlyModel &model);
 
-    void initLCM(const std::string topic_name, const bool threading = false);
-
-    /**
-     * @brief next wait for next messages
-     * @param time_ms optional timeout in milliseconds
-     * @return 0 on success
-     * @return -1 on failure
-     * @return -2 on timeout
-     */
-    int next(const int time_ms = 0);
+    void subscribe(const std::string &topic_name);
 
     void handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg);
 
@@ -68,21 +60,10 @@ public:
     }
 
 private:
-    lcm::LCM _lcm;
     std::vector<std::string> _joint_names;
     std::vector<float> _joint_values;
     std::map<std::string, float> _joints_name_value;
     dart::SE3 _T_wr;    // transformation world to robot
-
-    /**
-     * @brief _handle_thread thread object that handles LCM messages, e.g. waits for incomming messages
-     */
-    std::thread _handle_thread;
-
-    /**
-     * @brief _thread_running atomic flag to check if a thread is already running
-     */
-    std::atomic<bool> _thread_running;
 
     /**
      * @brief _mutex shared mutex to lock access to joint values.
