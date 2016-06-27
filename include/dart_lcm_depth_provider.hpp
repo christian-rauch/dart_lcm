@@ -56,10 +56,14 @@ private:
     DepthType * _depthData;
 #endif // CUDA_BUILD
 
+    ColorType * _colorData;
+
     /**
      * @brief _depthTime timestamp (seconds since the epoch) of depth data
      */
     uint64_t _depthTime;
+
+    uint64_t _colourTime;
 
     /**
      * @brief _cam_param internal structure to store camera parameters
@@ -138,6 +142,10 @@ public:
     const DepthType * getDeviceDepth() const { return 0; }
 #endif // CUDA_BUILD
 
+    const ColorType * getColor() const { return _colorData; }
+
+    ColorLayout getColorLayout() const { return LAYOUT_RGB; }
+
     /**
      * @brief getScaleToMeters
      * @return scale paramter that is multiplied with internal depth values to obtain values in meters
@@ -151,6 +159,11 @@ public:
     uint64_t getDepthTime() const {
         std::lock_guard<boost::shared_mutex> lck(_mutex);
         return _depthTime;
+    }
+
+    uint64_t getColorTime() const {
+        std::lock_guard<boost::shared_mutex> lck(_mutex);
+        return _colourTime;
     }
 
     /**
@@ -190,9 +203,7 @@ LCM_DepthSource<DepthType,ColorType>::LCM_DepthSource(const StereoCameraParamete
 
     // depth source properties
     this->_isLive = true; // no way to control LCM playback from here
-    this->_hasColor = false; // only depth for now
-    this->_colorWidth = 0;
-    this->_colorHeight = 0;
+    this->_hasColor = true;
     this->_hasTimestamps = true;
     this->_frame = 0; // initialize first frame
 
@@ -202,6 +213,8 @@ LCM_DepthSource<DepthType,ColorType>::LCM_DepthSource(const StereoCameraParamete
     this->_principalPoint = param.camera_center;
     this->_depthWidth = param.width;
     this->_depthHeight = param.height;
+    this->_colorWidth = param.width;
+    this->_colorHeight = param.height;
 
     _ScaleToMeters = scale;
 
@@ -211,6 +224,8 @@ LCM_DepthSource<DepthType,ColorType>::LCM_DepthSource(const StereoCameraParamete
 #else
     _depthData = new DepthType[this->_depthWidth*this->_depthHeight];
 #endif // CUDA_BUILD
+
+    _colorData = new ColorType[this->_colorWidth*this->_colorHeight];
 }
 
 template <typename DepthType, typename ColorType>
@@ -220,11 +235,13 @@ LCM_DepthSource<DepthType,ColorType>::~LCM_DepthSource() {
 #else
     delete [] _depthData;
 #endif // CUDA_BUILD
+
+    delete [] _colorData;
 }
 
 template <typename DepthType, typename ColorType>
 void LCM_DepthSource<DepthType,ColorType>::setFrame(const uint frame) {
-    // nothing to do, we cannot control LCM playbag from here
+    // nothing to do, we cannot control LCM playback from here
     if(this->_isLive) return;
 }
 
@@ -261,6 +278,7 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
 
     // pointer to constant values of raw data, we are not going to change the image
     const uint8_t * raw_data = NULL;
+    const uint8_t * colour_data = NULL;
 
     // go over all images
     for(unsigned int i=0; i<n_img; i++) {
@@ -279,6 +297,7 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
 
         // zlib compressed disparity image data
         case bot_core::images_t::DISPARITY_ZIPPED:
+        {
             // decompress data
             const uint8_t * raw_data_compressed = msg->images[i].data.data();
             // allocate memory for uncompressed image
@@ -304,6 +323,15 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
             }
             break;
         }
+
+        case bot_core::images_t::LEFT:
+        case bot_core::images_t::RIGHT:
+            colour_data = msg->images[i].data.data();
+            std::cout<<"format: "<<msg->images[i].pixelformat<<std::endl;
+            std::cout<<"size raw: "<<image_size_raw<<std::endl;
+            std::cout<<"size real: "<<image_size_real<<std::endl;
+            break;
+        }
     } // for i over images_t
 
     std::vector<DepthType> data;
@@ -323,10 +351,15 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
         std::cerr<<"no disparity image found"<<std::endl;
     }
 
+    if(colour_data!=NULL) {
+        // found colour image
+    }
+
     _mutex.lock();
 
     // cast time from signed to unsigned
     _depthTime = (msg->utime >= 0) ? (uint64_t)msg->utime : 0;
+    _colourTime = (msg->utime >= 0) ? (uint64_t)msg->utime : 0;
 
     // sync
 #ifdef CUDA_BUILD
@@ -334,9 +367,11 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
     delete [] raw_data;
     _depthData->syncHostToDevice();
 #else
-    _depthData = raw_data;
+    _depthData = (DepthType*)raw_data;
     // TODO: who is freeing 'raw_data'?
 #endif // CUDA_BUILD
+
+    _colorData = (ColorType*)colour_data;
 
     _mutex.unlock();
 }
