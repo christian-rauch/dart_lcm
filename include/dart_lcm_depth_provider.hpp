@@ -22,6 +22,44 @@
 // zlib de/-compression
 #include <zlib.h>
 
+/**
+ * @brief jpeg_decompress decompress jpeg data to bitmap
+ * @param jpg_buffer pointer to jpeg data
+ * @param jpg_size size of jpeg data buffer (e.g. the length of compressed data)
+ * @param bmp_buffer pointer to bitmap buffer that will contain the decompressed data, this buffer needs to be allocated with the expected image size (width * height * pixel-size)
+ * @return true on success
+ * @return false on failure
+ */
+bool jpeg_decompress(uint8_t *jpg_buffer, unsigned long jpg_size, uint8_t *bmp_buffer) {
+    struct jpeg_error_mgr jerr;
+    struct jpeg_decompress_struct cinfo;
+
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_decompress(&cinfo);
+
+    jpeg_mem_src(&cinfo, jpg_buffer, jpg_size);
+
+    // check jpeg header
+    int ret = jpeg_read_header(&cinfo, TRUE);
+    if(ret!=1) {
+        std::cerr<<"Data is not in jpeg format!"<<std::endl;
+        return false;
+    }
+
+    // read and decompress data
+    jpeg_start_decompress(&cinfo);
+    while(cinfo.output_scanline < cinfo.output_height) {
+        unsigned char *buffer_array[1];
+        buffer_array[0] = bmp_buffer + (cinfo.output_scanline*cinfo.output_width*cinfo.output_components);
+        jpeg_read_scanlines(&cinfo, buffer_array, 1);
+    }
+
+    jpeg_finish_decompress(&cinfo);
+    jpeg_destroy_decompress(&cinfo);
+
+    return true;
+}
+
 namespace dart {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +90,7 @@ private:
 #else
     /**
      * @brief _depthData pointer to regular array storing depth values
-     */
+     */jpeg_read_scanlines
     DepthType * _depthData;
 #endif // CUDA_BUILD
 
@@ -326,10 +364,19 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
 
         case bot_core::images_t::LEFT:
         case bot_core::images_t::RIGHT:
+            // read raw colour data
             colour_data = msg->images[i].data.data();
-            std::cout<<"format: "<<msg->images[i].pixelformat<<std::endl;
-            std::cout<<"size raw: "<<image_size_raw<<std::endl;
-            std::cout<<"size real: "<<image_size_real<<std::endl;
+            // process image according to pixel format
+            switch(msg->images[i].pixelformat) {
+            case bot_core::image_t::PIXEL_FORMAT_MJPEG:
+                // decompress jpeg data directly into previously allocated colour data buffer
+                jpeg_decompress((uint8_t*)colour_data, image_size_raw, (uint8_t*)_colorData);
+                break;
+            default:
+                // use as raw data
+                _colorData = (ColorType*)colour_data;
+            }
+
             break;
         }
     } // for i over images_t
@@ -351,10 +398,6 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
         std::cerr<<"no disparity image found"<<std::endl;
     }
 
-    if(colour_data!=NULL) {
-        // found colour image
-    }
-
     _mutex.lock();
 
     // cast time from signed to unsigned
@@ -370,8 +413,6 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
     _depthData = (DepthType*)raw_data;
     // TODO: who is freeing 'raw_data'?
 #endif // CUDA_BUILD
-
-    _colorData = (ColorType*)colour_data;
 
     _mutex.unlock();
 }
