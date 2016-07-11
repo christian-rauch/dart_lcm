@@ -72,7 +72,18 @@ struct StereoCameraParameter {
     float baseline;         // b in meter
     uint64_t width;         // image width in pxl
     uint64_t height;        // image height in pxl
-    float subpixel_resolution;
+
+    /**
+     * @brief subpixel_resolution resolution of stored disparity resolution in pixel,
+     * e.g. disparity_in_pixel = 1/subpixel_resolution * disparity_stored
+     */
+    float subpixel_resolution = 1.0;
+
+    /**
+     * @brief depth_resolution resolution of stored depth values in meter,
+     * e.g. depth_in_meter = 1/resolution * depth_stored
+     */
+    float depth_resolution = 1.0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -254,7 +265,11 @@ LCM_DepthSource<DepthType,ColorType>::LCM_DepthSource(const StereoCameraParamete
     this->_colorWidth = param.width;
     this->_colorHeight = param.height;
 
-    _ScaleToMeters = scale;
+    // set scale to depth resolution if scale has not been set
+    if(scale==1.0 && _cam_param.depth_resolution!=1.0)
+        _ScaleToMeters = _cam_param.depth_resolution;
+    else
+        _ScaleToMeters = scale;
 
     // allocate memory for depth image
 #ifdef CUDA_BUILD
@@ -317,6 +332,7 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
     // pointer to constant values of raw data, we are not going to change the image
     const uint8_t * raw_data = NULL;
     const uint8_t * colour_data = NULL;
+    bool convert;
 
     // go over all images
     for(unsigned int i=0; i<n_img; i++) {
@@ -330,11 +346,14 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
         switch(img_type) {
         // raw disparity image data
         case bot_core::images_t::DISPARITY:
+        case bot_core::images_t::DEPTH_MM:
             raw_data = msg->images[i].data.data();
+            convert = (img_type==bot_core::images_t::DISPARITY);
             break;
 
-        // zlib compressed disparity image data
+        // zlib compressed disparity or depth image data
         case bot_core::images_t::DISPARITY_ZIPPED:
+        case bot_core::images_t::DEPTH_MM_ZIPPED:
         {
             // decompress data
             const uint8_t * raw_data_compressed = msg->images[i].data.data();
@@ -359,6 +378,7 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
                     break;
                 }
             }
+            convert = (img_type==bot_core::images_t::DISPARITY_ZIPPED);
             break;
         }
 
@@ -391,11 +411,13 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
         // cast 16bit value to template type 'DepthType'
         std::vector<DepthType> data_typed(data_16bit.begin(), data_16bit.end());
         // disparity to distance
-        disparity_to_depth(data_typed.data());
+        if(convert) {
+            disparity_to_depth(data_typed.data());
+        }
         data = data_typed;
     }
     else {
-        std::cerr<<"no disparity image found"<<std::endl;
+        std::cerr<<"no disparity or depth image found"<<std::endl;
     }
 
     _mutex.lock();
