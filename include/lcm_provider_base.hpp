@@ -69,9 +69,4 @@ private:
     }
 };
 
-// default construction of static members
-lcm::LCM *LCM_CommonBase::_lcm = NULL;
-std::thread LCM_CommonBase::_thread;
-std::string LCM_CommonBase::_param;
-
 #endif // LCM_COMMON_BASE_HPP

@@ -42,6 +42,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 set(SRC_LIST
+    src/lcm_provider_base.cpp
     src/dart_lcm_joints.cpp
     )
 
