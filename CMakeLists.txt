@@ -44,10 +44,12 @@ link_directories(${Boost_LIBRARY_DIRS})
 set(SRC_LIST
     src/lcm_provider_base.cpp
     src/dart_lcm_joints.cpp
+    src/lcm_state_publish.cpp
     )
 
 set(HDR_LIST
     include/dart_lcm_joints.hpp
+    include/lcm_state_publish.hpp
     include/dart_lcm_depth_provider.hpp
     )
 
