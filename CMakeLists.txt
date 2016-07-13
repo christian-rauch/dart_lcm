@@ -48,9 +48,11 @@ set(SRC_LIST
     )
 
 set(HDR_LIST
+    include/dart_lcm_depth_provider.hpp
     include/dart_lcm_joints.hpp
     include/lcm_state_publish.hpp
-    include/dart_lcm_depth_provider.hpp
+    include/lcm_state_merge.hpp
+    include/utils.hpp
     )
 
 include_directories(include/)
