@@ -4,12 +4,25 @@
 #include <lcmtypes/bot_core/robot_state_t.hpp>
 #include <lcmtypes/bot_core/joint_state_t.hpp>
 
+#include <lcm_state_merge.hpp>
+#include <lcm_msg_operators.hpp>
+
 #include <sys/time.h>
 
-dart::LCM_StatePublish::LCM_StatePublish(std::string channel, dart::Pose &pose) :
-    _channel_prefix(channel), _pose(pose) { }
+dart::LCM_StatePublish::LCM_StatePublish(const std::string rep_channel, const std::string pub_channel, dart::Pose &pose) :
+    _channel_prefix(pub_channel), _pose(pose)
+{
+    // subscribe to reported pose for comparison
+    // As messages are handled in common thread, all callbacks attached to the
+    // same channel should be processed after each other. Hence, the reported
+    // robot pose should be the same amongst all instances using this channel.
+    if(getLCM().good())
+        getLCM().subscribe(rep_channel, &dart::LCM_StatePublish::store_message, this);
+    else
+        throw std::runtime_error("LCM is not good. Not subscribing.");
+}
 
-dart::LCM_StatePublish::~LCM_StatePublish() {}
+dart::LCM_StatePublish::~LCM_StatePublish() { }
 
 std::pair< std::vector<std::string>, std::vector<float> > dart::LCM_StatePublish::getJointList() {
     std::vector<std::string> joint_names;
@@ -42,29 +55,31 @@ bool dart::LCM_StatePublish::publish() {
     assert(joints.first.size()==joints.second.size());
 
     // create LCM messages
-    bot_core::robot_state_t robot_state_msg;
-    bot_core::joint_state_t joint_state_msg;
+    bot_core::joint_state_t est_joint_state;
 
     // get current time in milliseconds since the epoch
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    robot_state_msg.utime = joint_state_msg.utime =\
-            (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+    est_joint_state.utime = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
 
     // set joint names and values for both messages
-    robot_state_msg.num_joints = joint_state_msg.num_joints = joints.first.size();
-    robot_state_msg.joint_name = joint_state_msg.joint_name = joints.first;
-    robot_state_msg.joint_position = joint_state_msg.joint_position = joints.second;
+    est_joint_state.num_joints = joints.first.size();
+    est_joint_state.joint_name = joints.first;
+    est_joint_state.joint_position = joints.second;
 
     // FIXME: We apparently need to set something for each message member to
     // get LCM to encode our message. This should not be necessary.
-    robot_state_msg.joint_velocity = joint_state_msg.joint_velocity = \
-    robot_state_msg.joint_effort = joint_state_msg.joint_effort =\
-            std::vector<float>(joints.second.size());
+    est_joint_state.joint_velocity = est_joint_state.joint_effort = std::vector<float>(joints.second.size());
 
     // publish messages
-    getLCM().publish(_channel_prefix+"_ROBOT", &robot_state_msg);
-    getLCM().publish(_channel_prefix+"_JOINTS", &joint_state_msg);
+    getLCM().publish(_channel_prefix+"_JOINTS", &est_joint_state);
+
+    if(_reported.joint_name.size()!=0) {
+        bot_core::robot_state_t robot_state_msg, robot_state_diff_msg;
+        std::tie(robot_state_msg, robot_state_diff_msg) = LCM_StateMerge::merge(_reported, est_joint_state);
+        getLCM().publish(_channel_prefix+"_STATE", &robot_state_msg);
+        getLCM().publish(_channel_prefix+"_DIFF", &robot_state_diff_msg);
+    }
 
     return true;
 }

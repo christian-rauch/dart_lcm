@@ -40,17 +40,17 @@ merge_raw(const std::vector<std::string> &ref_names,
 /**
  * @brief merge
  * @param ref reference robot state
- * @param est estimated robot state
+ * @param est estimated robot state (or joint values)
  * @return tuple of merged robot state and its difference to the reference
  */
-template<typename MSG>
-std::tuple<MSG, MSG> merge(const MSG &ref, const MSG &est) {
+template<typename MSG_R, typename MSG_E>
+std::tuple<MSG_R, MSG_R> merge(const MSG_R &ref, const MSG_E &est) {
     const auto merged = merge_raw(ref.joint_name, ref.joint_position, est.joint_name, est.joint_position);
 
-    MSG state_merged = ref;
+    MSG_R state_merged = ref;
     state_merged.joint_position = std::get<1>(merged);
 
-    MSG state_diff = ref - state_merged;
+    MSG_R state_diff = ref - state_merged;
 
     return std::make_tuple(state_merged, state_diff);
 }
