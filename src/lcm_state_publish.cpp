@@ -76,7 +76,9 @@ bool dart::LCM_StatePublish::publish() {
 
     if(_reported.joint_name.size()!=0) {
         bot_core::robot_state_t robot_state_msg, robot_state_diff_msg;
+        _mutex.lock();
         std::tie(robot_state_msg, robot_state_diff_msg) = LCM_StateMerge::merge(_reported, est_joint_state);
+        _mutex.unlock();
         getLCM().publish(_channel_prefix+"_STATE", &robot_state_msg);
         getLCM().publish(_channel_prefix+"_DIFF", &robot_state_diff_msg);
     }

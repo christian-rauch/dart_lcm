@@ -5,6 +5,8 @@
 #include <dart/pose/pose.h>
 #include <lcmtypes/bot_core/robot_state_t.hpp>
 
+#include <mutex>
+
 namespace dart {
 
 class LCM_StatePublish : public LCM_CommonBase {
@@ -12,6 +14,7 @@ private:
     std::string _channel_prefix;    //!< prefix that is prepended to channel name
     const dart::Pose &_pose;        //!< reference to estimated model pose
     bot_core::robot_state_t _reported; //!< last received pose
+    std::mutex _mutex;              //!< mutex to synchronize access to _reported pose
 
     /**
      * @brief getJointList generate list of joint names and values from dart pose
@@ -20,8 +23,11 @@ private:
     std::pair< std::vector<std::string>, std::vector<float> > getJointList();
 
     void store_message(const lcm::ReceiveBuffer *rbuf, const std::string &channel, const bot_core::robot_state_t *msg) {
-        // copy reported pose
-        _reported = *msg;
+        if(_mutex.try_lock()) {
+            // copy reported pose
+            _reported = *msg;
+            _mutex.unlock();
+        }
     }
 
 public:
