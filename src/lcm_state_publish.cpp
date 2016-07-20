@@ -87,8 +87,9 @@ bool dart::LCM_StatePublish::publish() {
         _mutex.lock();
         std::tie(robot_state_msg, robot_state_diff_msg) = LCM_StateMerge::merge(_reported, est_joint_state, _limits);
         _mutex.unlock();
-        getLCM().publish(_channel_prefix+"_STATE", &robot_state_msg);
-        getLCM().publish(_channel_prefix+"_DIFF", &robot_state_diff_msg);
+        getLCM().publish(_channel_prefix+"REPORTED", &_reported);
+        getLCM().publish(_channel_prefix+"ESTIMATE_STATE", &robot_state_msg);
+        getLCM().publish(_channel_prefix+"ESTIMATE_DIFF", &robot_state_diff_msg);
     }
 
     return true;
