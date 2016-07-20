@@ -9,7 +9,7 @@
 
 #include <sys/time.h>
 
-dart::LCM_StatePublish::LCM_StatePublish(const std::string rep_channel, const std::string pub_channel, dart::Pose &pose) :
+dart::LCM_StatePublish::LCM_StatePublish(const std::string rep_channel, const std::string pub_channel, dart::Pose &pose, const bool apply_limits) :
     _channel_prefix(pub_channel), _pose(pose)
 {
     // subscribe to reported pose for comparison
@@ -20,6 +20,9 @@ dart::LCM_StatePublish::LCM_StatePublish(const std::string rep_channel, const st
         getLCM().subscribe(rep_channel, &dart::LCM_StatePublish::store_message, this);
     else
         throw std::runtime_error("LCM is not good. Not subscribing.");
+
+    if(apply_limits)
+        getLimits(pose);
 }
 
 dart::LCM_StatePublish::~LCM_StatePublish() { }
@@ -28,7 +31,7 @@ std::pair< std::vector<std::string>, std::vector<float> > dart::LCM_StatePublish
     std::vector<std::string> joint_names;
     std::vector<float> joint_values;
 
-    for(unsigned int i=0; i<_pose.getReducedArticulatedDimensions(); i++) {
+    for(int i=0; i<_pose.getReducedArticulatedDimensions(); i++) {
         const float joint_value = _pose.getReducedArticulation()[i];
         const std::string joint_name = _pose.getReducedName(i);
 
@@ -42,6 +45,11 @@ std::pair< std::vector<std::string>, std::vector<float> > dart::LCM_StatePublish
     }
 
     return std::make_pair(joint_names, joint_values);
+}
+
+void dart::LCM_StatePublish::getLimits(const dart::Pose &pose) {
+    for(int i=0; i<pose.getReducedArticulatedDimensions(); i++)
+        _limits[pose.getReducedName(i)] = std::make_pair(pose.getReducedMin(i), pose.getReducedMax(i));
 }
 
 bool dart::LCM_StatePublish::publish() {
@@ -72,12 +80,12 @@ bool dart::LCM_StatePublish::publish() {
     est_joint_state.joint_velocity = est_joint_state.joint_effort = std::vector<float>(joints.second.size());
 
     // publish messages
-    getLCM().publish(_channel_prefix+"_JOINTS", &est_joint_state);
+    getLCM().publish(_channel_prefix+"ESTIMATE_JOINTS", &est_joint_state);
 
     if(_reported.joint_name.size()!=0) {
         bot_core::robot_state_t robot_state_msg, robot_state_diff_msg;
         _mutex.lock();
-        std::tie(robot_state_msg, robot_state_diff_msg) = LCM_StateMerge::merge(_reported, est_joint_state);
+        std::tie(robot_state_msg, robot_state_diff_msg) = LCM_StateMerge::merge(_reported, est_joint_state, _limits);
         _mutex.unlock();
         getLCM().publish(_channel_prefix+"_STATE", &robot_state_msg);
         getLCM().publish(_channel_prefix+"_DIFF", &robot_state_diff_msg);

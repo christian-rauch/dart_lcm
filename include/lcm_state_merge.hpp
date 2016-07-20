@@ -9,6 +9,24 @@
 
 namespace LCM_StateMerge {
 
+typedef std::map<std::string, std::pair<float, float>> LimitMap;
+
+/**
+ * @brief apply_limits apply joint limits to a LCM message containing joint_position
+ * @param ref message on which to enforce limits
+ * @param limits joint names and their lower and upper limit
+ */
+template<typename MSG_R>
+void apply_limits(MSG_R &ref, const LimitMap &limits) {
+    for(unsigned int i = 0; i<ref.num_joints; i++) {
+        const std::string jname = ref.joint_name[i];
+        if(limits.count(jname)) {
+            ref.joint_position[i] = std::max(ref.joint_position[i], limits.at(jname).first);
+            ref.joint_position[i] = std::min(ref.joint_position[i], limits.at(jname).second);
+        }
+    }
+}
+
 /**
  * @brief merge_raw merge reference and estimated joint values by replacing reference values by estimated values
  * @param ref_names vector of names for reference joints
@@ -41,10 +59,16 @@ merge_raw(const std::vector<std::string> &ref_names,
  * @brief merge
  * @param ref reference robot state
  * @param est estimated robot state (or joint values)
+ * @param limits joint limits to be enforced on reported state (optional)
  * @return tuple of merged robot state and its difference to the reference
  */
 template<typename MSG_R, typename MSG_E>
-std::tuple<MSG_R, MSG_R> merge(const MSG_R &ref, const MSG_E &est) {
+std::tuple<MSG_R, MSG_R> merge(MSG_R &ref, const MSG_E &est,
+                               const LimitMap &limits = LimitMap())
+{
+    if(limits.size()!=0)
+        apply_limits(ref, limits);
+
     const auto merged = merge_raw(ref.joint_name, ref.joint_position, est.joint_name, est.joint_position);
 
     MSG_R state_merged = ref;

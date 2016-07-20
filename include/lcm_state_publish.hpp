@@ -15,12 +15,19 @@ private:
     const dart::Pose &_pose;        //!< reference to estimated model pose
     bot_core::robot_state_t _reported; //!< last received pose
     std::mutex _mutex;              //!< mutex to synchronize access to _reported pose
+    std::map<std::string, std::pair<float, float>> _limits; //!< joint limits
 
     /**
      * @brief getJointList generate list of joint names and values from dart pose
      * @return pair of joint name list and joint value list
      */
     std::pair< std::vector<std::string>, std::vector<float> > getJointList();
+
+    /**
+     * @brief getLimits fetch joint limits from DART pose
+     * @param pose DART pose with limits on joints
+     */
+    void getLimits(const dart::Pose &pose);
 
     void store_message(const lcm::ReceiveBuffer *rbuf, const std::string &channel, const bot_core::robot_state_t *msg) {
         if(_mutex.try_lock()) {
@@ -36,8 +43,9 @@ public:
      * @param rep_channel channel to listen for reported pose
      * @param pub_channel channel name prefix to publish on
      * @param pose estimated DART pose of model whose values are continuously updated
+     * @param apply_limits flag to read and enforce joint limits from DART pose
      */
-    LCM_StatePublish(const std::string rep_channel, const std::string pub_channel, dart::Pose &pose);
+    LCM_StatePublish(const std::string rep_channel, const std::string pub_channel, dart::Pose &pose, const bool apply_limits = true);
 
     ~LCM_StatePublish();
 
