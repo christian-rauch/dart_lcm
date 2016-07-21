@@ -308,11 +308,11 @@ bool LCM_DepthSource<DepthType,ColorType>::hasRadialDistortionParams() const {
 
 template <typename DepthType, typename ColorType>
 bool LCM_DepthSource<DepthType,ColorType>::subscribe(const std::string &img_channel) {
-    if(!getLCM().good()) {
+    if(!getLCMSub().good()) {
         return false;
     }
 
-    getLCM().subscribe(img_channel, &LCM_DepthSource<DepthType, ColorType>::imgHandle, this);
+    getLCMSub().subscribe(img_channel, &LCM_DepthSource<DepthType, ColorType>::imgHandle, this);
 
     return true;
 }

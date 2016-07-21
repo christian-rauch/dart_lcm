@@ -25,11 +25,11 @@ public:
      * @param param LCM provider string
      */
     static void setProvider(const std::string &param) {
-        if(_lcm == NULL) {
+        if(_lcm_sub == NULL) {
             _param = param;
         }
         else {
-            std::cerr<<"LCM object is already instiated. Calling init() will have no effect."<<std::endl;
+            std::cerr<<"LCM object is already instantiated. Calling setProvider() will have no effect."<<std::endl;
         }
     }
 
@@ -38,18 +38,23 @@ protected:
         start();
     }
 
-    ~LCM_CommonBase() { delete _lcm; }
+    ~LCM_CommonBase() { delete _lcm_sub; delete _lcm_pub;}
 
     /**
-     * @brief getLCM provides the common lcm object
+     * @brief getLCM provides the common lcm object for subscriptions
      * @return lcm object
      */
-    static lcm::LCM &getLCM() {
-        return *_lcm;
-    }
+    static lcm::LCM &getLCMSub() { return *_lcm_sub; }
+
+    /**
+     * @brief getLCM provides the common lcm object for publishing
+     * @return lcm object
+     */
+    static lcm::LCM &getLCMPub() { return *_lcm_pub; }
 
 private:
-    static lcm::LCM *_lcm;      /// LCM object pointer
+    static lcm::LCM *_lcm_sub;  /// LCM object pointer for subscribing
+    static lcm::LCM *_lcm_pub;  /// LCM object pointer for publishing
     static std::string _param;  /// LCM provider string
     static std::thread _thread; /// thread
 
@@ -57,15 +62,20 @@ private:
      * @brief start instantiate LCM and run handle thread
      */
     void start() {
-        if(_lcm == NULL) {
-            _lcm = new lcm::LCM(_param);
+        // create and configure LCM subscription object
+        if(_lcm_sub == NULL) {
+            _lcm_sub = new lcm::LCM(_param);
             _thread = std::thread([]{
                 while(true) {
-                    if(_lcm->good())
-                        _lcm->handle();
+                    if(_lcm_sub->good())
+                        _lcm_sub->handle();
                 }
             });
         }
+
+        // create LCM publishing object
+        if(_lcm_pub == NULL)
+            _lcm_pub = new lcm::LCM();
     }
 };
 
