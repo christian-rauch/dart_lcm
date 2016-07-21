@@ -16,8 +16,8 @@ dart::LCM_StatePublish::LCM_StatePublish(const std::string rep_channel, const st
     // As messages are handled in common thread, all callbacks attached to the
     // same channel should be processed after each other. Hence, the reported
     // robot pose should be the same amongst all instances using this channel.
-    if(getLCMSub().good())
-        getLCMSub().subscribe(rep_channel, &dart::LCM_StatePublish::store_message, this);
+    if(good())
+        subscribe(rep_channel, &dart::LCM_StatePublish::store_message, this);
     else
         throw std::runtime_error("LCM is not good. Not subscribing.");
 
@@ -52,9 +52,9 @@ void dart::LCM_StatePublish::getLimits(const dart::Pose &pose) {
         _limits[pose.getReducedName(i)] = std::make_pair(pose.getReducedMin(i), pose.getReducedMax(i));
 }
 
-bool dart::LCM_StatePublish::publish() {
+bool dart::LCM_StatePublish::publish_estimate() {
 
-    if(!getLCMSub().good())
+    if(!good())
         return false;
 
     // list of joint names and their value
@@ -80,16 +80,16 @@ bool dart::LCM_StatePublish::publish() {
     est_joint_state.joint_velocity = est_joint_state.joint_effort = std::vector<float>(joints.second.size());
 
     // publish messages
-    getLCMPub().publish(_channel_prefix+"ESTIMATE_JOINTS", &est_joint_state);
+    publish(_channel_prefix+"ESTIMATE_JOINTS", &est_joint_state);
 
     if(_reported.joint_name.size()!=0) {
         bot_core::robot_state_t robot_state_msg, robot_state_diff_msg;
         _mutex.lock();
         std::tie(robot_state_msg, robot_state_diff_msg) = LCM_StateMerge::merge(_reported, est_joint_state, _limits);
         _mutex.unlock();
-        getLCMPub().publish(_channel_prefix+"REPORTED", &_reported);
-        getLCMPub().publish(_channel_prefix+"ESTIMATE_STATE", &robot_state_msg);
-        getLCMPub().publish(_channel_prefix+"ESTIMATE_DIFF", &robot_state_diff_msg);
+        publish(_channel_prefix+"REPORTED", &_reported);
+        publish(_channel_prefix+"ESTIMATE_STATE", &robot_state_msg);
+        publish(_channel_prefix+"ESTIMATE_DIFF", &robot_state_diff_msg);
     }
 
     return true;

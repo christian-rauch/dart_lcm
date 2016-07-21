@@ -23,8 +23,8 @@ void LCM_JointsProvider::setJointNames(const HostOnlyModel &model) {
     _mutex.unlock();
 }
 
-void LCM_JointsProvider::subscribe(const std::string &topic_name) {
-    if(!getLCMSub().good())
+void LCM_JointsProvider::subscribe_robot_state(const std::string &topic_name) {
+    if(!good())
         return;
 
     // check if joint names are known
@@ -33,7 +33,7 @@ void LCM_JointsProvider::subscribe(const std::string &topic_name) {
         return;
     }
 
-    getLCMSub().subscribe(topic_name, &LCM_JointsProvider::handle_msg_joints, this);
+    subscribe(topic_name, &LCM_JointsProvider::handle_msg_joints, this);
 }
 
 void LCM_JointsProvider::handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg) {

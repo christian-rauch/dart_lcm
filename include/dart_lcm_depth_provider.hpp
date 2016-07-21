@@ -216,7 +216,7 @@ public:
     }
 
     /**
-     * @brief subscribe initializing LCM subscriber to images_t topic
+     * @brief subscribe_images initializing LCM subscriber to images_t topic
      *
      * This method sets up the subscription for the requested channel. By default, the handling of messages (and thus advance()) will block. Set threading to true to wait for incomming messages in a dedicated thread. Alternatively to wait for incomming messages in a single thread, a timeout value van be set. This value is not used if threading is true.
      *
@@ -224,7 +224,7 @@ public:
      * @return true on success
      * @return false on failure
      */
-    bool subscribe(const std::string &img_channel);
+    bool subscribe_images(const std::string &img_channel);
 
     /**
      * @brief imgHandle callback function that is called each time a new message arrives.
@@ -307,12 +307,12 @@ bool LCM_DepthSource<DepthType,ColorType>::hasRadialDistortionParams() const {
 }
 
 template <typename DepthType, typename ColorType>
-bool LCM_DepthSource<DepthType,ColorType>::subscribe(const std::string &img_channel) {
-    if(!getLCMSub().good()) {
+bool LCM_DepthSource<DepthType,ColorType>::subscribe_images(const std::string &img_channel) {
+    if(!good()) {
         return false;
     }
 
-    getLCMSub().subscribe(img_channel, &LCM_DepthSource<DepthType, ColorType>::imgHandle, this);
+    subscribe(img_channel, &LCM_DepthSource<DepthType, ColorType>::imgHandle, this);
 
     return true;
 }

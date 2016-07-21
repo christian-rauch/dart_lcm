@@ -40,7 +40,7 @@ public:
      */
     void setJointNames(const HostOnlyModel &model);
 
-    void subscribe(const std::string &topic_name);
+    void subscribe_robot_state(const std::string &topic_name);
 
     void handle_msg_joints(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const bot_core::robot_state_t* msg);
 

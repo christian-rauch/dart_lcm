@@ -50,11 +50,11 @@ public:
     ~LCM_StatePublish();
 
     /**
-     * @brief publish read current joint values from pose and publish messages
+     * @brief publish_estimate read current joint values from pose and publish messages
      * @return true on success
      * @return false on failure
      */
-    bool publish();
+    bool publish_estimate();
 };
 
 }

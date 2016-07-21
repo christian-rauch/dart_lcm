@@ -41,16 +41,32 @@ protected:
     ~LCM_CommonBase() { delete _lcm_sub; delete _lcm_pub;}
 
     /**
-     * @brief getLCM provides the common lcm object for subscriptions
-     * @return lcm object
+     * @brief good forwarding of lcm::LCM::good()
+     * @return
      */
-    static lcm::LCM &getLCMSub() { return *_lcm_sub; }
+    bool good() {
+        return (_lcm_sub->good() && _lcm_pub->good());
+    }
 
     /**
-     * @brief getLCM provides the common lcm object for publishing
-     * @return lcm object
+     * @brief publish forwarding of lcm::LCM::publish(...)
+     * @param args parameters for publish(...)
+     * @return
      */
-    static lcm::LCM &getLCMPub() { return *_lcm_pub; }
+    template<typename... Args>
+    int publish(Args&&... args) {
+        return _lcm_pub->publish(std::forward<Args>(args)...);
+    }
+
+    /**
+     * @brief subscribe forwarding of lcm::LCM::subscribe(...)
+     * @param args parameters for subscribe(...)
+     * @return
+     */
+    template<typename... Args>
+    lcm::Subscription* subscribe(Args&&... args) {
+        return _lcm_sub->subscribe(std::forward<Args>(args)...);
+    }
 
 private:
     static lcm::LCM *_lcm_sub;  /// LCM object pointer for subscribing
