@@ -33,18 +33,11 @@ public:
         }
     }
 
-protected:
-    LCM_CommonBase() {
-        start();
-    }
-
-    ~LCM_CommonBase() { delete _lcm_sub; delete _lcm_pub;}
-
     /**
      * @brief good forwarding of lcm::LCM::good()
      * @return
      */
-    bool good() {
+    static bool good() {
         return (_lcm_sub->good() && _lcm_pub->good());
     }
 
@@ -54,7 +47,7 @@ protected:
      * @return
      */
     template<typename... Args>
-    int publish(Args&&... args) {
+    static int publish(Args&&... args) {
         return _lcm_pub->publish(std::forward<Args>(args)...);
     }
 
@@ -64,9 +57,16 @@ protected:
      * @return
      */
     template<typename... Args>
-    lcm::Subscription* subscribe(Args&&... args) {
+    static lcm::Subscription* subscribe(Args&&... args) {
         return _lcm_sub->subscribe(std::forward<Args>(args)...);
     }
+
+protected:
+    LCM_CommonBase() {
+        start();
+    }
+
+    ~LCM_CommonBase() { delete _lcm_sub; delete _lcm_pub;}
 
 private:
     static lcm::LCM *_lcm_sub;  /// LCM object pointer for subscribing
