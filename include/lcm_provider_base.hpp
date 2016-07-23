@@ -33,6 +33,10 @@ public:
         }
     }
 
+    static void exitOnFailure(const bool failure_exit = true) {
+        _exit_failure = failure_exit;
+    }
+
     /**
      * @brief good forwarding of lcm::LCM::good()
      * @return
@@ -73,6 +77,7 @@ private:
     static lcm::LCM *_lcm_pub;  /// LCM object pointer for publishing
     static std::string _param;  /// LCM provider string
     static std::thread _thread; /// thread
+    static bool _exit_failure;
 
     /**
      * @brief start instantiate LCM and run handle thread
@@ -83,8 +88,12 @@ private:
             _lcm_sub = new lcm::LCM(_param);
             _thread = std::thread([]{
                 while(true) {
-                    if(_lcm_sub->good())
-                        _lcm_sub->handle();
+                    if(_lcm_sub->good()) {
+                        if(_lcm_sub->handle()==-1 && _exit_failure) {
+                            std::cerr<<"Exiting after handle() returned failure!"<<std::endl;
+                            exit(0);
+                        }
+                    }
                 }
             });
         }
