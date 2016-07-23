@@ -45,12 +45,14 @@ set(SRC_LIST
     src/lcm_provider_base.cpp
     src/dart_lcm_joints.cpp
     src/lcm_state_publish.cpp
+    src/lcm_frame_pose_publish.cpp
     )
 
 set(HDR_LIST
     include/dart_lcm_depth_provider.hpp
     include/dart_lcm_joints.hpp
     include/lcm_state_publish.hpp
+    include/lcm_frame_pose_publish.hpp
     include/lcm_state_merge.hpp
     include/utils.hpp
     )
