@@ -1,4 +1,5 @@
 #include "lcm_frame_pose_publish.hpp"
+#include <lcm_msg_operators.hpp>
 
 
 
@@ -26,9 +27,11 @@ bool dart::LCM_FramePosePublish::publish_frame_pose(const std::string &frame) {
 
     const bot_core::position_3d_t msg_rep = MSGfromSE3(rep_frame_pose);
     const bot_core::position_3d_t msg_est = MSGfromSE3(est_frame_pose);
+    const bot_core::position_3d_t diff = msg_rep - msg_est;
 
     publish(_channel+"_POSE_"+frame+"_REP", &msg_rep);
     publish(_channel+"_POSE_"+frame+"_EST", &msg_est);
+    publish(_channel+"_POSE_"+frame+"_DIFF", &diff);
 
     return true;
 }
