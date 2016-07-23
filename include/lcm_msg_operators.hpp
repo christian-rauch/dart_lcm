@@ -3,7 +3,7 @@
 
 #include <lcmtypes/bot_core.hpp>
 
-bot_core::vector_3d_t operator-(const bot_core::vector_3d_t &lhs, const bot_core::vector_3d_t &rhs) {
+static bot_core::vector_3d_t operator-(const bot_core::vector_3d_t &lhs, const bot_core::vector_3d_t &rhs) {
     bot_core::vector_3d_t res;
     res.x = lhs.x - rhs.x;
     res.y = lhs.y - rhs.y;
@@ -11,7 +11,7 @@ bot_core::vector_3d_t operator-(const bot_core::vector_3d_t &lhs, const bot_core
     return res;
 }
 
-bot_core::quaternion_t operator-(const bot_core::quaternion_t &lhs, const bot_core::quaternion_t &rhs) {
+static bot_core::quaternion_t operator-(const bot_core::quaternion_t &lhs, const bot_core::quaternion_t &rhs) {
     bot_core::quaternion_t res;
     res.x = lhs.x - rhs.x;
     res.y = lhs.y - rhs.y;
@@ -20,14 +20,14 @@ bot_core::quaternion_t operator-(const bot_core::quaternion_t &lhs, const bot_co
     return res;
 }
 
-bot_core::position_3d_t operator-(const bot_core::position_3d_t &lhs, const bot_core::position_3d_t &rhs) {
+static bot_core::position_3d_t operator-(const bot_core::position_3d_t &lhs, const bot_core::position_3d_t &rhs) {
     bot_core::position_3d_t res;
     res.translation = lhs.translation - rhs.translation;
     res.rotation = lhs.rotation - rhs.rotation;
     return res;
 }
 
-bot_core::twist_t operator-(const bot_core::twist_t &lhs, const bot_core::twist_t &rhs) {
+static bot_core::twist_t operator-(const bot_core::twist_t &lhs, const bot_core::twist_t &rhs) {
     bot_core::twist_t res;
     res.linear_velocity = lhs.linear_velocity - rhs.linear_velocity;
     res.angular_velocity = lhs.angular_velocity - rhs.angular_velocity;
@@ -35,7 +35,7 @@ bot_core::twist_t operator-(const bot_core::twist_t &lhs, const bot_core::twist_
 }
 
 template<typename T>
-std::vector<T> vec_diff(const std::vector<T> &v1, const std::vector<T> &v2) {
+static std::vector<T> vec_diff(const std::vector<T> &v1, const std::vector<T> &v2) {
     assert(v1.size()==v2.size());
 
     std::vector<T> res(v1.size());
@@ -45,7 +45,7 @@ std::vector<T> vec_diff(const std::vector<T> &v1, const std::vector<T> &v2) {
     return res;
 }
 
-bot_core::force_torque_t operator-(const bot_core::force_torque_t &lhs, const bot_core::force_torque_t &rhs) {
+static bot_core::force_torque_t operator-(const bot_core::force_torque_t &lhs, const bot_core::force_torque_t &rhs) {
     bot_core::force_torque_t res;
     res.l_foot_force_z = lhs.l_foot_force_z - rhs.l_foot_force_z;
     res.l_foot_torque_x = lhs.l_foot_torque_x - rhs.l_foot_torque_x;
@@ -64,7 +64,7 @@ bot_core::force_torque_t operator-(const bot_core::force_torque_t &lhs, const bo
     return res;
 }
 
-bot_core::robot_state_t operator-(const bot_core::robot_state_t &lhs, const bot_core::robot_state_t &rhs) {
+static bot_core::robot_state_t operator-(const bot_core::robot_state_t &lhs, const bot_core::robot_state_t &rhs) {
     assert(lhs.num_joints==rhs.num_joints);
     assert(lhs.joint_name==rhs.joint_name);
 
