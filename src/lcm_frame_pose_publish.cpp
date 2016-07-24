@@ -6,17 +6,18 @@
 dart::LCM_FramePosePublish::LCM_FramePosePublish(const std::string &channel_pref, dart::Model &rep, dart::MirroredModel &est) : _channel(channel_pref), _rep(rep), _est(est){ }
 
 bot_core::position_3d_t dart::LCM_FramePosePublish::MSGfromSE3(const dart::SE3 &transform) {
+    const dart::se3 pose = dart::se3FromSE3(transform);
     bot_core::position_3d_t msg;
-    msg.translation.x = transform.r0.w;
-    msg.translation.y = transform.r1.w;
-    msg.translation.z = transform.r2.w;
+    msg.translation.x = pose.p[0];
+    msg.translation.y = pose.p[1];
+    msg.translation.z = pose.p[2];
     const float3 rot = dart::eulerFromSE3(transform);
     // We are using the rotation field (quaternion_t) the wrong way to prevent the
     // forth and backwards conversion of Euler to Quaternion. The 'w' is set to
     // NAN to indicate that this is not a valid Quaternion.
-    msg.rotation.x = rot.x;
-    msg.rotation.y = rot.y;
-    msg.rotation.z = rot.z;
+    msg.rotation.x = rot.x; // phi
+    msg.rotation.y = rot.y; // theta
+    msg.rotation.z = rot.z; // psi
     msg.rotation.w = NAN;
     return msg;
 }
