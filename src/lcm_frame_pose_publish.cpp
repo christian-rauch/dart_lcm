@@ -23,8 +23,17 @@ bot_core::position_3d_t dart::LCM_FramePosePublish::MSGfromSE3(const dart::SE3 &
 }
 
 bool dart::LCM_FramePosePublish::publish_frame_pose(const std::string &frame) {
-    const dart::SE3 rep_frame_pose = _rep.getTransformCameraToFrame(_rep.getJointIdByName(frame));
-    const dart::SE3 est_frame_pose = _est.getTransformCameraToFrame(_est.getJointIdByName(frame));
+//    const dart::SE3 rep_frame_pose = _rep.getTransformCameraToFrame(_rep.getJointIdByName(frame));
+//    const dart::SE3 est_frame_pose = _est.getTransformCameraToFrame(_est.getJointIdByName(frame));
+
+//    const dart::SE3 rep_frame_pose = _rep.getTransformFrameToCamera(_rep.getJointIdByName(frame));
+//    const dart::SE3 est_frame_pose = _est.getTransformFrameToCamera(_est.getJointIdByName(frame));
+
+//    const dart::SE3 rep_frame_pose = _rep.getTransformModelToFrame(_rep.getJointIdByName(frame));
+//    const dart::SE3 est_frame_pose = _est.getTransformModelToFrame(_est.getJointIdByName(frame));
+
+    const dart::SE3 rep_frame_pose = _rep.getTransformFrameToModel(_rep.getJointIdByName(frame));
+    const dart::SE3 est_frame_pose = _est.getTransformFrameToModel(_est.getJointIdByName(frame));
 
     const bot_core::position_3d_t msg_rep = MSGfromSE3(rep_frame_pose);
     const bot_core::position_3d_t msg_est = MSGfromSE3(est_frame_pose);
