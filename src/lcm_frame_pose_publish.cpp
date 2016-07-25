@@ -1,7 +1,7 @@
 #include "lcm_frame_pose_publish.hpp"
 #include <lcm_msg_operators.hpp>
 
-
+#include <cmath>
 
 dart::LCM_FramePosePublish::LCM_FramePosePublish(const std::string &channel_pref, dart::Model &rep, dart::MirroredModel &est) : _channel(channel_pref), _rep(rep), _est(est){ }
 
@@ -37,7 +37,11 @@ bool dart::LCM_FramePosePublish::publish_frame_pose(const std::string &frame) {
 
     const bot_core::position_3d_t msg_rep = MSGfromSE3(rep_frame_pose);
     const bot_core::position_3d_t msg_est = MSGfromSE3(est_frame_pose);
-    const bot_core::position_3d_t diff = msg_rep - msg_est;
+    bot_core::position_3d_t diff = msg_rep - msg_est;
+    // wrap angular error around -PI and PI to prevent errors > PI
+    diff.rotation.x = M_PI - std::abs(std::abs(diff.rotation.x) - M_PI);
+    diff.rotation.y = M_PI - std::abs(std::abs(diff.rotation.y) - M_PI);
+    diff.rotation.z = M_PI - std::abs(std::abs(diff.rotation.z) - M_PI);
 
     publish(_channel+"_POSE_"+frame+"_REP", &msg_rep);
     publish(_channel+"_POSE_"+frame+"_EST", &msg_est);
