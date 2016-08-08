@@ -22,6 +22,9 @@
 // zlib de/-compression
 #include <zlib.h>
 
+// set optional filter distance in meter to remove all points beyond this point
+//#define FILTER_DIST 0.5
+
 /**
  * @brief jpeg_decompress decompress jpeg data to bitmap
  * @param jpg_buffer pointer to jpeg data
@@ -414,6 +417,11 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
         if(convert) {
             disparity_to_depth(data_typed.data());
         }
+#ifdef FILTER_DIST
+        for(unsigned int i=0; i<data_typed.size(); i++) {
+            data_typed[i] = (data_typed[i]>FILTER_DIST) ? 0 : data_typed[i];
+        }
+#endif
         data = data_typed;
     }
     else {
