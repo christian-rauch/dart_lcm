@@ -22,9 +22,6 @@
 // zlib de/-compression
 #include <zlib.h>
 
-// set optional filter distance in meter to remove all points beyond this point
-//#define FILTER_DIST 0.5
-
 /**
  * @brief jpeg_decompress decompress jpeg data to bitmap
  * @param jpg_buffer pointer to jpeg data
@@ -115,6 +112,9 @@ private:
      */
     uint64_t _depthTime;
 
+    /**
+     * @brief _colourTime timestamp (seconds since the epoch) of colour data
+     */
     uint64_t _colourTime;
 
     /**
@@ -131,6 +131,11 @@ private:
      * @brief _mutex synchronize access to data
      */
     mutable boost::shared_mutex _mutex;
+
+    /**
+     * @brief _max_depth_distance remove depth readings beyond this distance (in meter)
+     */
+    float _max_depth_distance;
 
 public:
     /**
@@ -219,6 +224,12 @@ public:
     }
 
     /**
+     * @brief setMaxDepthDistance set depth distance in meter after which to remove sensor readings
+     * @param max_dist distance in meter
+     */
+    void setMaxDepthDistance(float max_dist) { _max_depth_distance=max_dist; }
+
+    /**
      * @brief subscribe_images initializing LCM subscriber to images_t topic
      *
      * This method sets up the subscription for the requested channel. By default, the handling of messages (and thus advance()) will block. Set threading to true to wait for incomming messages in a dedicated thread. Alternatively to wait for incomming messages in a single thread, a timeout value van be set. This value is not used if threading is true.
@@ -273,6 +284,8 @@ LCM_DepthSource<DepthType,ColorType>::LCM_DepthSource(const StereoCameraParamete
         _ScaleToMeters = _cam_param.depth_resolution;
     else
         _ScaleToMeters = scale;
+
+    _max_depth_distance = 0;
 
     // allocate memory for depth image
 #ifdef CUDA_BUILD
@@ -417,11 +430,14 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
         if(convert) {
             disparity_to_depth(data_typed.data());
         }
-#ifdef FILTER_DIST
-        for(unsigned int i=0; i<data_typed.size(); i++) {
-            data_typed[i] = (data_typed[i]>FILTER_DIST) ? 0 : data_typed[i];
+
+        // remove depth readings beyond the maximum distance
+        if(_max_depth_distance>0) {
+            for(unsigned int i=0; i<data_typed.size(); i++) {
+                data_typed[i] = (data_typed[i]>_max_depth_distance) ? 0 : data_typed[i];
+            }
         }
-#endif
+
         data = data_typed;
     }
     else {
