@@ -11,8 +11,9 @@ include(ExternalProject)
 
 ExternalProject_Add(lcm_types
     GIT_REPOSITORY https://github.com/openhumanoids/bot_core_lcmtypes.git
+    GIT_TAG oh-old-buildsystem
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lcm_types
-    INSTALL_COMMAND make install
+    INSTALL_COMMAND make
     )
 
 ExternalProject_Get_Property(lcm_types binary_dir)
@@ -25,7 +26,7 @@ pkg_check_modules(dart REQUIRED dart cuda-7.5)
 
 # LCM
 include_directories(${lcm_INCLUDE_DIRS})
-include_directories(${binary_dir}/lcmgen)
+include_directories(${binary_dir}/include)
 
 # DART
 include_directories(${dart_INCLUDE_DIRS})
@@ -68,7 +69,7 @@ target_link_libraries(dart_lcm ${Boost_SYSTEM_LIBRARIES} ${Boost_THREAD_LIBRARIE
 install(TARGETS dart_lcm LIBRARY DESTINATION lib)  # shared library
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 # TODO: do we need these LCM types later?
-install(DIRECTORY ${binary_dir}/lcmgen/ DESTINATION include FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY ${binary_dir}/include/ DESTINATION include FILES_MATCHING PATTERN "*.hpp")
 
 # setup pkg-config files
 SET(PKG_CONFIG_REQUIRES "dart lcm")
