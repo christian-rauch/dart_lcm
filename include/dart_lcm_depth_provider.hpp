@@ -137,6 +137,11 @@ private:
      */
     float _max_depth_distance;
 
+    /**
+     * @brief new_image_state state of a processed image, 0: no image, 1: new image, 2: processed once, 3: processed more than once
+     */
+    uint new_image_state;
+
 public:
     /**
      * @brief LCM_DepthSource
@@ -255,6 +260,12 @@ public:
      * @param disparity_img array containing disparity values, will contain depth values after function call
      */
     void disparity_to_depth(DepthType *disparity_img);
+
+    /**
+     * @brief hasNewImageProcessedOnce
+     * @return true if a new image has been processed once
+     */
+    bool hasNewImageProcessedOnce();
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -295,6 +306,8 @@ LCM_DepthSource<DepthType,ColorType>::LCM_DepthSource(const StereoCameraParamete
 #endif // CUDA_BUILD
 
     _colorData = new ColorType[this->_colorWidth*this->_colorHeight];
+
+    new_image_state = 0;
 }
 
 template <typename DepthType, typename ColorType>
@@ -315,7 +328,13 @@ void LCM_DepthSource<DepthType,ColorType>::setFrame(const uint frame) {
 }
 
 template <typename DepthType, typename ColorType>
-void LCM_DepthSource<DepthType,ColorType>::advance() { }
+void LCM_DepthSource<DepthType,ColorType>::advance() {
+    // this is called when a new image is requested
+    // the image data is set in 'imgHandle' and new_image indicates that this data has been used
+    std::lock_guard<boost::shared_mutex> lck(_mutex);
+    if(new_image_state>0) // a new image has been processed at least once
+        new_image_state++;
+}
 
 template <typename DepthType, typename ColorType>
 bool LCM_DepthSource<DepthType,ColorType>::hasRadialDistortionParams() const {
@@ -334,7 +353,7 @@ bool LCM_DepthSource<DepthType,ColorType>::subscribe_images(const std::string &i
 }
 
 template <typename DepthType, typename ColorType>
-void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* /*rbuf*/, const std::string& /*channel*/,
                const bot_core::images_t* msg) {
 
     _mutex.lock();
@@ -460,6 +479,9 @@ void LCM_DepthSource<DepthType,ColorType>::imgHandle(const lcm::ReceiveBuffer* r
     // TODO: who is freeing 'raw_data'?
 #endif // CUDA_BUILD
 
+    // indicate that a new image is available
+    new_image_state = 1;
+
     _mutex.unlock();
 }
 
@@ -477,6 +499,12 @@ void LCM_DepthSource<DepthType,ColorType>::disparity_to_depth(DepthType *dispari
         // deal with disparity 0 (avoid FPE / division by zero)
         disparity_img[i] = (disparity_img[i]!=0.0) ? (factor / (disparity_img[i] * sr)) : 0;
     }
+}
+
+template <typename DepthType, typename ColorType>
+bool LCM_DepthSource<DepthType,ColorType>::hasNewImageProcessedOnce() {
+    std::lock_guard<boost::shared_mutex> lck(_mutex);
+    return new_image_state==2;
 }
 
 } // namespace dart
