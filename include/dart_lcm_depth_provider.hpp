@@ -108,12 +108,12 @@ private:
     ColorType * _colorData;
 
     /**
-     * @brief _depthTime timestamp (seconds since the epoch) of depth data
+     * @brief _depthTime timestamp (microseconds since the epoch) of depth data
      */
     uint64_t _depthTime;
 
     /**
-     * @brief _colourTime timestamp (seconds since the epoch) of colour data
+     * @brief _colourTime timestamp (microseconds since the epoch) of colour data
      */
     uint64_t _colourTime;
 

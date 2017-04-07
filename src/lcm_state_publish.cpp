@@ -65,10 +65,8 @@ bool dart::LCM_StatePublish::publish_estimate() {
     // create LCM messages
     bot_core::joint_state_t est_joint_state;
 
-    // get current time in milliseconds since the epoch
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    est_joint_state.utime = (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+    // use timestamp of original reported joint values
+    est_joint_state.utime = _reported.utime;
 
     // set joint names and values for both messages
     est_joint_state.num_joints = joints.first.size();
@@ -85,6 +83,7 @@ bool dart::LCM_StatePublish::publish_estimate() {
         bot_core::robot_state_t robot_state_msg, robot_state_diff_msg;
         _mutex.lock();
         std::tie(robot_state_msg, robot_state_diff_msg) = LCM_StateMerge::merge(_reported, est_joint_state, _limits);
+        robot_state_msg.utime = _reported.utime;
         _mutex.unlock();
         publish(_channel_prefix+"REPORTED", &_reported);
         publish(_channel_prefix+"ESTIMATE_STATE", &robot_state_msg);
