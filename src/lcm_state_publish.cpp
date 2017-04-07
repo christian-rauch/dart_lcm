@@ -75,8 +75,7 @@ bool dart::LCM_StatePublish::publish_estimate() {
     est_joint_state.joint_name = joints.first;
     est_joint_state.joint_position = joints.second;
 
-    // FIXME: We apparently need to set something for each message member to
-    // get LCM to encode our message. This should not be necessary.
+    // we need to set values here to have LCM encode our message
     est_joint_state.joint_velocity = est_joint_state.joint_effort = std::vector<float>(joints.second.size());
 
     // publish messages
