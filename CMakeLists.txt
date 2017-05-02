@@ -14,6 +14,8 @@ ExternalProject_Add(lcm_types
     GIT_TAG oh-old-buildsystem
     INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/lcm_types
     INSTALL_COMMAND make
+    # skip update and rebuild, assumes git tag 'oh-old-buildsystem' does not change
+    UPDATE_COMMAND ""
     )
 
 ExternalProject_Get_Property(lcm_types binary_dir)
