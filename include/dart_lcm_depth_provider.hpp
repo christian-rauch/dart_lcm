@@ -227,7 +227,10 @@ public:
      * @brief setMaxDepthDistance set depth distance in meter after which to remove sensor readings
      * @param max_dist distance in meter
      */
-    void setMaxDepthDistance(float max_dist) { _max_depth_distance=max_dist; }
+    void setMaxDepthDistance(float max_dist) {
+        // convert threshold from meters to internally used depth unit
+        _max_depth_distance = max_dist/_ScaleToMeters;
+    }
 
     /**
      * @brief subscribe_images initializing LCM subscriber to images_t topic
