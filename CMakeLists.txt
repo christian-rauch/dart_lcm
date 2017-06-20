@@ -24,7 +24,7 @@ find_package(CUDA REQUIRED)
 find_package(Boost REQUIRED thread system)
 find_package(PkgConfig)
 pkg_check_modules(LCM REQUIRED lcm)
-pkg_check_modules(dart REQUIRED dart cuda-7.5)
+pkg_check_modules(dart REQUIRED dart cuda-8.0)
 
 # LCM
 include_directories(${lcm_INCLUDE_DIRS})
