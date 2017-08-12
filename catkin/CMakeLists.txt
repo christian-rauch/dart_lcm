@@ -102,7 +102,7 @@ find_package(Boost REQUIRED filesystem) # traversing paths to find meshes
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    INCLUDE_DIRS ../include
+    INCLUDE_DIRS include
     LIBRARIES dart_lcm
     CATKIN_DEPENDS dart
 #  DEPENDS system_lib
