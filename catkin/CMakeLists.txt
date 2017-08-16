@@ -14,7 +14,7 @@ find_package(catkin REQUIRED dart lcm_catkin bot_core_lcmtypes)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(CUDA REQUIRED)             # CUDA types used by DART
-find_package(Boost REQUIRED filesystem) # traversing paths to find meshes
+find_package(Boost REQUIRED thread system)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -105,7 +105,7 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES dart_lcm
     CATKIN_DEPENDS dart
-#  DEPENDS system_lib
+    DEPENDS boost
 )
 
 ###########
@@ -156,6 +156,7 @@ add_library(dart_lcm ../src/lcm_provider_base.cpp
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+target_link_libraries(dart_lcm ${catkin_LIBRARIES} ${Boost_SYSTEM_LIBRARIES} ${Boost_THREAD_LIBRARIES})
 
 #############
 ## Install ##
