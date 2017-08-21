@@ -18,7 +18,7 @@ typedef std::map<std::string, std::pair<float, float>> LimitMap;
  */
 template<typename MSG_R>
 void apply_limits(MSG_R &ref, const LimitMap &limits) {
-    for(unsigned int i = 0; i<ref.num_joints; i++) {
+    for(unsigned int i = 0; i<uint(ref.num_joints); i++) {
         const std::string jname = ref.joint_name[i];
         if(limits.count(jname)) {
             ref.joint_position[i] = std::max(ref.joint_position[i], limits.at(jname).first);

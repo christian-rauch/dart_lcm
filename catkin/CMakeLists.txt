@@ -5,6 +5,7 @@ project(dart_lcm)
 add_definitions(-std=c++11)
 
 add_definitions ("-Wall")
+add_definitions ("-Wno-unused-function")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
