@@ -106,7 +106,7 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES dart_lcm
     CATKIN_DEPENDS dart
-    DEPENDS boost
+    DEPENDS Boost
 )
 
 ###########
